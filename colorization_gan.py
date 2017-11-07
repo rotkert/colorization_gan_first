@@ -17,5 +17,8 @@ config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
 
 with tf.Session(config = config) as sess:
     gan_model = GAN(sess, config = FLAGS)
+    
+    
+    
     gan_model.train(FLAGS)
         

@@ -9,6 +9,8 @@ import layers
 import numpy as np
 import data_provider as dp
 from layers import linear, batch_norm
+import matplotlib.pyplot as plt
+from skimage.color.colorconv import yuv2rgb
 
 class GAN(object):
     def __init__(self, sess, config):
@@ -32,6 +34,9 @@ class GAN(object):
         
         self.d_loss = - tf.reduce_mean(self.logits_real - self.logits_generated)
         self.g_loss = -tf.reduce_mean(self.logits_generated)
+        
+        tf.summary.scalar("d_loss", self.d_loss)
+        tf.summary.scalar("g_loss", self.g_loss)
         
         self.total_loss = self.d_loss + self.g_loss
         
@@ -100,14 +105,18 @@ class GAN(object):
         data_provider = dp.DataProvider(config)
         
         sample_images = data_provider.load_data(config, init = True)
-        sample_z = np.random.uniform(-1, 1, size=(3, config.batch_size, 100))
+        sample_z = np.random.uniform(-1, 1, size=(1, config.batch_size, 100))
+        
+        writer = tf.summary.FileWriter("F:\\test\\")
+        writer.add_graph(self.sess.graph)
         
         counter = 0
-        while counter < 1:
+        while counter < 60:
+            print(counter)
             for k_d in range(0, 5):
+                print(k_d)
                 batch_images = data_provider.load_data(config)
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, 100]).astype(np.float32)
-                
                 _, _g_loss, _d_loss, _loss = self.sess.run([d_optim, self.g_loss, self.d_loss, self.total_loss],
                         feed_dict = {self.z: batch_z, self.images_YUV: batch_images})
                 self.sess.run([clip_d_vars_op], feed_dict={})
@@ -116,4 +125,12 @@ class GAN(object):
                 batch_images = data_provider.load_data(config)
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, 100]).astype(np.float32)
                 self.sess.run([g_optim], feed_dict={self.z: batch_z, self.images_YUV: batch_images})
+                
+            tf.summary.image("sample", yuv2rgb(sample_images[0:2]), 2)
+            _generate_image, _g_loss, _d_loss, _loss = self.sess.run([self.generated_images_YUV, self.g_loss, self.d_loss, self.total_loss], feed_dict={self.z: sample_z[0], self.images_YUV: sample_images})
+            tf.summary.image("sample", yuv2rgb(_generate_image[0:2]), 2)
+            summ = tf.summary.merge_all()
+            [s] = self.sess.run([summ], feed_dict={self.z: sample_z[0], self.images_YUV: sample_images})
+            writer.add_summary(s, counter)
+            counter += 1
         
