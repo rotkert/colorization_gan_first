@@ -8,7 +8,7 @@ import tensorflow as tf
 from GAN import GAN
 
 tf.app.flags.DEFINE_integer("image_size", 32, "The size of the output images to produce [32]")
-tf.app.flags.DEFINE_integer("batch_size", 32, "The size of batch images")
+tf.app.flags.DEFINE_integer("batch_size", 64, "The size of batch images")
 
 FLAGS = tf.app.flags.FLAGS
 

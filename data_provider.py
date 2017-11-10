@@ -19,22 +19,24 @@ class DataProvider(object):
         self.data = self.data.transpose([0, 2, 3, 1])
         self.data = rgb2yuv(self.data)
         
-        self.len = len(self.data)
+        self.data_sample = self.data[0 : config.batch_size]
+        self.data_train = self.data[config.batch_size : len(self.data)]
+        
+        self.len = len(self.data_train)
         self.batch_idxs = self.len / config.batch_size
         self.batch_idx = 0
         self.epoch_idx = 0
+        np.random.shuffle(self.data_train)
         
-    def load_data(self, config, init = False):
-        if init:
-            np.random.shuffle(self.data)
-            self.batch_idx = 0
-            self.epoch_idx = 0
-            
-        batch_images = self.data[self.batch_idx * config.batch_size : (self.batch_idx + 1) * config.batch_size]
+    def load_sample(self):
+        return self.data_sample
+        
+    def load_data(self, config):            
+        batch_images = self.data_train[self.batch_idx * config.batch_size : (self.batch_idx + 1) * config.batch_size]
         self.batch_idx += 1
         
         if self.batch_idx >= self.batch_idxs:
-            np.random.shuffle(self.data)
+            np.random.shuffle(self.data_train)
             self.batch_idx = 0
             self.epoch_idx += 1
             
