@@ -15,7 +15,7 @@ tf.app.flags.DEFINE_string("result_dir", "D:\\moje\\neural_result", "Directory t
 tf.app.flags.DEFINE_integer("disc_step", 5, "Steps of discriminator in one iteration")
 tf.app.flags.DEFINE_integer("gen_step", 1, "Steps of generator in one iteration")
 tf.app.flags.DEFINE_integer("iterations", 10000, "Iterations of disc-gen steps")
-tf.app.flags.DEFINE_integer("save_samples_interval", 20, "Interval of saving samples")
+tf.app.flags.DEFINE_integer("save_samples_interval", 5, "Interval of saving samples")
 tf.app.flags.DEFINE_integer("save_model_interval", 50, "Interval of saving model")
 
 FLAGS = tf.app.flags.FLAGS

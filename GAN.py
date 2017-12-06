@@ -32,13 +32,26 @@ class GAN(object):
         
         # discriminator
         self.logits_real = self.discriminator(self.images_YUV, config = config)
-        self.logits_generated = self.discriminator(self.generated_images_YUV, reuse = True, config = config) 
+        self.logits_generated = self.discriminator(self.generated_images_YUV, reuse = True, config = config)
+        self.logits_generated_disc = [1 - self.logits_generated[i] for i in range(config.batch_size)]
         
-        self.d_loss = - tf.reduce_mean(self.logits_real - self.logits_generated)
-        self.g_loss = -tf.reduce_mean(self.logits_generated)
+        self.labels_real = [1 for i in range(config.batch_size)]
+        
+        self.xent_real = tf.nn.softmax_cross_entropy_with_logits(labels = self.labels_real, logits = self.logits_real)
+        self.xent_generated_disc = tf.nn.softmax_cross_entropy_with_logits(labels = self.labels_real, logits = self.logits_generated_disc)
+        self.xent_generated_gen = tf.nn.softmax_cross_entropy_with_logits(labels = self.labels_real, logits = self.logits_generated)
+        
+        self.d_loss = tf.reduce_mean(self.xent_real + self.xent_generated_disc)
+        self.g_loss = tf.reduce_mean(self.xent_generated_gen)
         
         tf.summary.scalar("d_loss", self.d_loss)
         tf.summary.scalar("g_loss", self.g_loss)
+        
+        tf.summary.scalar("logits_gen_0", self.logits_generated[0])
+        tf.summary.scalar("logits_disc_0", self.logits_generated_disc[0]) 
+        
+        tf.summary.scalar("logits_gen_1", self.logits_generated[1])
+        tf.summary.scalar("logits_disc_1", self.logits_generated_disc[1])
         
         self.total_loss = self.d_loss + self.g_loss
         
@@ -90,7 +103,7 @@ class GAN(object):
 
             h4 = linear(tf.reshape(h3, [config.batch_size, -1]), 524288, 64, name = "d_h4_lin")
             h5 = linear(h4, 64, 1, name = "d_h5_lin")
-            return h5
+            return tf.nn.sigmoid(h5)
         
     def save_images(self, images, size, image_path, color_space = "RGB"):
         merged_image = self.merge(images, size)
