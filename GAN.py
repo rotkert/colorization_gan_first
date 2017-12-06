@@ -4,6 +4,7 @@ Created on 28 paź 2017
 @author: Miko
 '''
 
+import os
 import tensorflow as tf
 import layers
 import numpy as np
@@ -11,6 +12,7 @@ import data_provider as dp
 from layers import linear, batch_norm
 import matplotlib.pyplot as plt
 from skimage.color.colorconv import yuv2rgb
+from scipy import misc
 
 class GAN(object):
     def __init__(self, sess, config):
@@ -89,6 +91,28 @@ class GAN(object):
             h4 = linear(tf.reshape(h3, [config.batch_size, -1]), 524288, 64, name = "d_h4_lin")
             h5 = linear(h4, 64, 1, name = "d_h5_lin")
             return h5
+        
+    def save_images(self, images, size, image_path, color_space = "RGB"):
+        merged_image = self.merge(images, size)
+        return misc.imsave(image_path, merged_image)
+ 
+    def merge(self, images, size):
+        h, w = images.shape[1], images.shape[2]
+        img = np.zeros((h * size[0], w * size[1], 3))
+        for idx, image in enumerate(images):
+            i = idx % size[1]
+            j = idx // size[1]
+            img[j*h:j*h+h, i*w:i*w+w, :] = image
+        return img
+    
+    def save_model(self, config, step):
+        model_name = "WGAN.model"
+        model_dir = os.path.join(config.run_dir, "models")
+ 
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
+ 
+        self.saver.save(self.sess, os.path.join(model_dir, model_name), global_step=step)
                 
     def train(self, config):
         d_optim = tf.train.AdamOptimizer(0.0002, beta1 = 0.5).minimize(self.d_loss, var_list = self.d_vars)
@@ -107,32 +131,41 @@ class GAN(object):
         sample_images = data_provider.load_sample()
         sample_z = np.random.uniform(-1, 1, size=(1, config.batch_size, 100))
         
-        tf.summary.image("sample_org", yuv2rgb(sample_images), 10)
+        tf.summary.image("sample_org", yuv2rgb(sample_images), 8)
+        self.save_images(yuv2rgb(sample_images), [1, config.batch_size], os.path.join(config.run_dir, "org.png"))
         
-        writer = tf.summary.FileWriter("F:\\magisterka\\neural_result")
+        writer = tf.summary.FileWriter(config.run_dir)
         writer.add_graph(self.sess.graph)
         
         counter = 0
-        while counter < 5:
+        while counter < config.iterations:
             print(counter)
-            for k_d in range(0, 3):
+            for k_d in range(0, config.disc_step):
                 print(k_d)
                 batch_images = data_provider.load_data(config)
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, 100]).astype(np.float32)
                 _, _g_loss, _d_loss, _loss = self.sess.run([d_optim, self.g_loss, self.d_loss, self.total_loss],
                         feed_dict = {self.z: batch_z, self.images_YUV: batch_images})
                 self.sess.run([clip_d_vars_op], feed_dict={})
-                
-            for k_g in range(0, 1):
+                 
+            for k_g in range(0, config.gen_step):
                 batch_images = data_provider.load_data(config)
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, 100]).astype(np.float32)
                 self.sess.run([g_optim], feed_dict={self.z: batch_z, self.images_YUV: batch_images})
+                 
+            if counter % config.save_samples_interval == 0:
+                _generate_image, _g_loss, _d_loss, _loss = self.sess.run([self.generated_images_YUV, self.g_loss, self.d_loss, self.total_loss], feed_dict={self.z: sample_z[0], self.images_YUV: sample_images})
+                _generate_image_rgb = yuv2rgb(_generate_image)
+                tf.summary.image("sample_gen", _generate_image_rgb, 8)
+                summ = tf.summary.merge_all()
+                [s] = self.sess.run([summ], feed_dict={self.z: sample_z[0], self.images_YUV: sample_images})
+                writer.add_summary(s, counter)
+                self.save_images(_generate_image_rgb, [1, config.batch_size], os.path.join(config.run_dir, "step" + str(counter) + ".png"))
                 
-            
-            _generate_image, _g_loss, _d_loss, _loss = self.sess.run([self.generated_images_YUV, self.g_loss, self.d_loss, self.total_loss], feed_dict={self.z: sample_z[0], self.images_YUV: sample_images})
-            tf.summary.image("sample_gen", yuv2rgb(_generate_image), 10)
-            summ = tf.summary.merge_all()
-            [s] = self.sess.run([summ], feed_dict={self.z: sample_z[0], self.images_YUV: sample_images})
-            writer.add_summary(s, counter)
+            if counter % config.save_model_interval == 0:
+                self.save_model(config, counter)
+                
             counter += 1
+            
+ 
         
