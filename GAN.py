@@ -35,7 +35,7 @@ class GAN(object):
         self.logits_generated = self.discriminator(self.generated_images_YUV, reuse = True, config = config)
         self.logits_generated_disc = [1 - self.logits_generated[i] for i in range(config.batch_size)]
         
-        self.labels_real = [1 for i in range(config.batch_size)]
+        self.labels_real = tf.get_variable('labels', [8, 1], initializer = tf.constant_initializer(1))
         
         self.xent_real = tf.nn.softmax_cross_entropy_with_logits(labels = self.labels_real, logits = self.logits_real)
         self.xent_generated_disc = tf.nn.softmax_cross_entropy_with_logits(labels = self.labels_real, logits = self.logits_generated_disc)
