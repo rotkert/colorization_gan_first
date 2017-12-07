@@ -33,13 +33,13 @@ class GAN(object):
         # discriminator
         self.logits_real = self.discriminator(self.images_YUV, config = config)
         self.logits_generated = self.discriminator(self.generated_images_YUV, reuse = True, config = config)
-        self.logits_generated_disc = [1 - self.logits_generated[i] for i in range(config.batch_size)]
+        self.logits_generated_disc = tf.multiply(self.logits_generated, -1) + 1
         
-        self.labels_real = tf.get_variable('labels', [8, 1], initializer = tf.constant_initializer(1))
+        self.labels_real = tf.get_variable('labels', [8, 1], initializer = tf.constant_initializer(1.0))
         
         self.xent_real = tf.nn.softmax_cross_entropy_with_logits(labels = self.labels_real, logits = self.logits_real)
-        self.xent_generated_disc = tf.nn.softmax_cross_entropy_with_logits(labels = self.labels_real, logits = self.logits_generated_disc)
-        self.xent_generated_gen = tf.nn.softmax_cross_entropy_with_logits(labels = self.labels_real, logits = self.logits_generated)
+        self.xent_generated_disc = tf.nn.sigmoid_cross_entropy_with_logits(labels = self.labels_real, logits = self.logits_generated_disc)
+        self.xent_generated_gen = tf.nn.sigmoid_cross_entropy_with_logits(labels = self.labels_real, logits = self.logits_generated)
         
         self.d_loss = tf.reduce_mean(self.xent_real + self.xent_generated_disc)
         self.g_loss = tf.reduce_mean(self.xent_generated_gen)
@@ -47,11 +47,8 @@ class GAN(object):
         tf.summary.scalar("d_loss", self.d_loss)
         tf.summary.scalar("g_loss", self.g_loss)
         
-        tf.summary.scalar("logits_gen_0", self.logits_generated[0])
-        tf.summary.scalar("logits_disc_0", self.logits_generated_disc[0]) 
-        
-        tf.summary.scalar("logits_gen_1", self.logits_generated[1])
-        tf.summary.scalar("logits_disc_1", self.logits_generated_disc[1])
+        tf.summary.scalar("logits_gen", tf.reduce_mean(self.logits_generated))
+        tf.summary.scalar("logits_disc", tf.reduce_mean(self.logits_generated_disc)) 
         
         self.total_loss = self.d_loss + self.g_loss
         
@@ -128,8 +125,8 @@ class GAN(object):
         self.saver.save(self.sess, os.path.join(model_dir, model_name), global_step=step)
                 
     def train(self, config):
-        d_optim = tf.train.AdamOptimizer(0.0002, beta1 = 0.5).minimize(self.d_loss, var_list = self.d_vars)
-        g_optim = tf.train.AdamOptimizer(0.0001, beta1 = 0.5).minimize(self.g_loss, var_list = self.g_vars)
+        d_optim = tf.train.AdamOptimizer(0.002, beta1 = 0.5).minimize(self.d_loss, var_list = self.d_vars)
+        g_optim = tf.train.AdamOptimizer(0.002, beta1 = 0.5).minimize(self.g_loss, var_list = self.g_vars)
         
         clip_ops = []
         for var in self.d_vars:
@@ -162,6 +159,7 @@ class GAN(object):
                 self.sess.run([clip_d_vars_op], feed_dict={})
                  
             for k_g in range(0, config.gen_step):
+                print(k_g)
                 batch_images = data_provider.load_data(config)
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, 100]).astype(np.float32)
                 self.sess.run([g_optim], feed_dict={self.z: batch_z, self.images_YUV: batch_images})
@@ -170,10 +168,11 @@ class GAN(object):
                 _generate_image, _g_loss, _d_loss, _loss = self.sess.run([self.generated_images_YUV, self.g_loss, self.d_loss, self.total_loss], feed_dict={self.z: sample_z[0], self.images_YUV: sample_images})
                 _generate_image_rgb = yuv2rgb(_generate_image)
                 tf.summary.image("sample_gen", _generate_image_rgb, 8)
-                summ = tf.summary.merge_all()
-                [s] = self.sess.run([summ], feed_dict={self.z: sample_z[0], self.images_YUV: sample_images})
-                writer.add_summary(s, counter)
                 self.save_images(_generate_image_rgb, [1, config.batch_size], os.path.join(config.run_dir, "step" + str(counter) + ".png"))
+                
+            summ = tf.summary.merge_all()
+            [s] = self.sess.run([summ], feed_dict={self.z: sample_z[0], self.images_YUV: sample_images})
+            writer.add_summary(s, counter)
                 
             if counter % config.save_model_interval == 0:
                 self.save_model(config, counter)
