@@ -157,10 +157,11 @@ class GAN(object):
                 _generate_image, _g_loss, _d_loss, _loss = self.sess.run([self.generated_images_YUV, self.g_loss, self.d_loss, self.total_loss], feed_dict={self.z: sample_z[0], self.images_YUV: sample_images})
                 _generate_image_rgb = yuv2rgb(_generate_image)
                 tf.summary.image("sample_gen", _generate_image_rgb, 8)
-                summ = tf.summary.merge_all()
-                [s] = self.sess.run([summ], feed_dict={self.z: sample_z[0], self.images_YUV: sample_images})
-                writer.add_summary(s, counter)
                 self.save_images(_generate_image_rgb, [1, config.batch_size], os.path.join(config.run_dir, "step" + str(counter) + ".png"))
+
+            summ = tf.summary.merge_all()                
+            [s] = self.sess.run([summ], feed_dict={self.z: sample_z[0], self.images_YUV: sample_images})
+            writer.add_summary(s, counter)
                 
             if counter % config.save_model_interval == 0:
                 self.save_model(config, counter)
