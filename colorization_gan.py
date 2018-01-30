@@ -19,6 +19,7 @@ tf.app.flags.DEFINE_integer("gen_step", 1, "Steps of generator in one iteration"
 tf.app.flags.DEFINE_integer("iterations", 10, "Iterations of disc-gen steps")
 tf.app.flags.DEFINE_integer("save_samples_interval", 2, "Interval of saving samples")
 tf.app.flags.DEFINE_integer("save_model_interval", 50, "Interval of saving model")
+tf.app.flags.DEFINE_string("run_dir", "", "run dir")
 
 FLAGS = tf.app.flags.FLAGS
 
