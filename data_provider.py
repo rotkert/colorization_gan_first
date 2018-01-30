@@ -11,7 +11,7 @@ from skimage.color.colorconv import rgb2yuv
 class DataProvider(object):
     
     def __init__(self, config):
-        with open('D:\\moje\\datasets\\cifar-10-batches-py\\data_batch_1', 'rb') as fo:
+        with open('/home/mkamins3/dataset/cifar-10-batches-py/data_batch_1', 'rb') as fo:
             raw = pickle.load(fo, encoding = 'bytes')
         
         raw_float = np.array(raw[b'data'], dtype = float) / 255.0

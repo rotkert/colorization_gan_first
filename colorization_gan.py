@@ -11,11 +11,11 @@ from GAN import GAN
 
 tf.app.flags.DEFINE_integer("image_size", 32, "The size of the output images to produce [32]")
 tf.app.flags.DEFINE_integer("batch_size", 8, "The size of batch images")
-tf.app.flags.DEFINE_string("result_dir", "D:\\moje\\neural_result", "Directory to save results")
+tf.app.flags.DEFINE_string("result_dir", "/home/mkamins3/results", "Directory to save results")
 tf.app.flags.DEFINE_integer("disc_step", 5, "Steps of discriminator in one iteration")
 tf.app.flags.DEFINE_integer("gen_step", 1, "Steps of generator in one iteration")
-tf.app.flags.DEFINE_integer("iterations", 100000, "Iterations of disc-gen steps")
-tf.app.flags.DEFINE_integer("save_samples_interval", 20, "Interval of saving samples")
+tf.app.flags.DEFINE_integer("iterations", 10, "Iterations of disc-gen steps")
+tf.app.flags.DEFINE_integer("save_samples_interval", 2, "Interval of saving samples")
 tf.app.flags.DEFINE_integer("save_model_interval", 50, "Interval of saving model")
 
 FLAGS = tf.app.flags.FLAGS
