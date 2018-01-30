@@ -20,11 +20,11 @@ tf.app.flags.DEFINE_integer("iterations", 10, "Iterations of disc-gen steps")
 tf.app.flags.DEFINE_integer("save_samples_interval", 2, "Interval of saving samples")
 tf.app.flags.DEFINE_integer("save_model_interval", 50, "Interval of saving model")
 
+FLAGS = tf.app.flags.FLAGS
 
 now = datetime.datetime.now()
-tf.app.flags.DEFINE_string("run_dir", os.path.join(FLAGS.result_dir, "run-" + now.strftime("%Y-%m-%d_%H%M")), "run directory")
+FLAGS.run_dir = os.path.join(FLAGS.result_dir, "run-" + now.strftime("%Y-%m-%d_%H%M"))
 
-FLAGS = tf.app.flags.FLAGS
 config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
 
 if not os.path.exists(FLAGS.run_dir):
