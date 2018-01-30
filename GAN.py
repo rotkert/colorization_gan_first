@@ -10,9 +10,6 @@ import layers
 import numpy as np
 import data_provider as dp
 from layers import linear, batch_norm
-import matplotlib.pyplot as plt
-from skimage.color.colorconv import yuv2rgb
-from scipy import misc
 
 class GAN(object):
     def __init__(self, sess, config):

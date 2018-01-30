@@ -6,7 +6,6 @@ Created on 29 paź 2017
 
 import numpy as np
 import pickle
-from skimage.color.colorconv import rgb2yuv
 
 class DataProvider(object):
     
