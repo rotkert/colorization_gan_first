@@ -117,8 +117,8 @@ class GAN(object):
         self.saver.save(self.sess, os.path.join(model_dir, model_name), global_step=step)
                 
     def train(self, config):
-        d_optim = tf.train.AdamOptimizer(0.0002, beta1 = 0.5).minimize(self.d_loss, var_list = self.d_vars)
-        g_optim = tf.train.AdamOptimizer(0.0001, beta1 = 0.5).minimize(self.g_loss, var_list = self.g_vars)
+        d_optim = tf.train.AdamOptimizer(0.0005, beta1 = 0.5).minimize(self.d_loss, var_list = self.d_vars)
+        g_optim = tf.train.AdamOptimizer(0.0005, beta1 = 0.5).minimize(self.g_loss, var_list = self.g_vars)
         
         clip_ops = []
         for var in self.d_vars:
