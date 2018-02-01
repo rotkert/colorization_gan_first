@@ -37,7 +37,7 @@ class GAN(object):
         self.disc_fake = tf.nn.sigmoid_cross_entropy_with_logits(labels = tf.ones_like(self.logits_generated), logits = self.logits_generated)
         self.disc_fake_minus = tf.nn.sigmoid_cross_entropy_with_logits(labels = tf.zeros_like(self.logits_generated), logits = self.logits_generated)
         self.d_loss = tf.reduce_mean(self.disc_real) + tf.reduce_mean(self.disc_fake_minus)
-        selg.g_loss = tf.reduce_mean(self.disc_fake)
+        self.g_loss = tf.reduce_mean(self.disc_fake)
         
         tf.summary.scalar("d_loss", self.d_loss)
         tf.summary.scalar("g_loss", self.g_loss)
